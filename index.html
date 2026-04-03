@@ -68,17 +68,21 @@
 </style>
 </head>
 <body>
-
+ 
 <h1>Screen time tracker</h1>
 <p class="sub">Upload your screenshot — Claude reads it automatically</p>
-
+ 
 <div class="tabs">
   <button class="tab active" onclick="switchTab('log', this)">Log today</button>
   <button class="tab" onclick="switchTab('history', this)">History</button>
   <button class="tab" onclick="switchTab('trends', this)">Trends</button>
+  <button class="tab" onclick="switchTab('settings', this)">Settings</button>
 </div>
-
+ 
 <div id="tab-log" class="section active">
+  <div id="no-key-warning" class="card" style="display:none;border-color:#5a2a2a;background:#1a0a0a;">
+    <div style="font-size:13px;color:#c85a5a;">⚠️ No API key set. Go to <strong>Settings</strong> and paste your Anthropic API key to enable screenshot reading and analysis.</div>
+  </div>
   <div class="card">
     <div class="card-label">Step 1 — upload screenshot</div>
     <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
@@ -91,7 +95,7 @@
     <div class="upload-count" id="upload-count"></div>
     <button class="reset-btn" id="reset-btn" style="display:none" onclick="resetLog()">✕ Remove and re-upload</button>
   </div>
-
+ 
   <div class="card" id="form-card" style="display:none">
     <div class="card-label">Step 2 — confirm extracted data</div>
     <div class="loading" id="extract-loading">
@@ -121,7 +125,7 @@
       <button class="btn-primary" id="save-btn" onclick="saveAndAnalyze()">Save and get analysis →</button>
     </div>
   </div>
-
+ 
   <div class="card" id="analysis-card" style="display:none">
     <div class="card-label">Claude's analysis</div>
     <div class="loading" id="analysis-loading" style="display:none">
@@ -131,29 +135,68 @@
     <div class="analysis-text" id="analysis-text"></div>
   </div>
 </div>
-
+ 
 <div id="tab-history" class="section">
   <div class="card">
     <div class="card-label">Past entries</div>
     <div id="history-list"></div>
   </div>
 </div>
-
+ 
+<div id="tab-settings" class="section">
+  <div class="card">
+    <div class="card-label">Anthropic API key</div>
+    <p style="font-size:13px;color:#888;margin-bottom:12px;">Your key is saved only on this device. Never shared anywhere.</p>
+    <div class="field" style="margin-bottom:10px;">
+      <label>API key</label>
+      <input type="password" id="api-key-input" placeholder="sk-ant-..." style="font-family:monospace;" />
+    </div>
+    <button class="btn-primary" onclick="saveKey()">Save key</button>
+    <div id="key-status" style="font-size:13px;margin-top:10px;display:none;"></div>
+  </div>
+</div>
+ 
 <div id="tab-trends" class="section">
   <div id="trends-content"></div>
 </div>
-
+ 
 <script>
 const STORAGE_KEY = 'st_v2';
+const KEY_STORAGE = 'st_apikey';
 let entries = [];
 let imagesBase64 = [];
-
+ 
+function getKey() { return localStorage.getItem(KEY_STORAGE) || ''; }
+ 
+function saveKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (!val.startsWith('sk-ant-')) {
+    document.getElementById('key-status').style.display = 'block';
+    document.getElementById('key-status').style.color = '#c85a5a';
+    document.getElementById('key-status').textContent = 'That doesn\'t look right — key should start with sk-ant-';
+    return;
+  }
+  localStorage.setItem(KEY_STORAGE, val);
+  document.getElementById('key-status').style.display = 'block';
+  document.getElementById('key-status').style.color = '#5a9a5a';
+  document.getElementById('key-status').textContent = '✓ Key saved. You\'re all set.';
+  checkKey();
+}
+ 
+function checkKey() {
+  const warning = document.getElementById('no-key-warning');
+  if (!getKey()) { warning.style.display = 'block'; } else { warning.style.display = 'none'; }
+  const saved = getKey();
+  if (saved) document.getElementById('api-key-input').value = saved;
+}
+ 
 try { const d = localStorage.getItem(STORAGE_KEY); if (d) entries = JSON.parse(d); } catch(e) {}
-
+window.addEventListener('load', checkKey);
+ 
 function saveEntries() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); } catch(e) {}
 }
-
+ 
 function fmtH(h) {
   const hrs = Math.floor(h);
   const mins = Math.round((h - hrs) * 60);
@@ -161,13 +204,13 @@ function fmtH(h) {
   if (mins === 0) return hrs + 'h';
   return hrs + 'h ' + mins + 'm';
 }
-
+ 
 function tagFor(total) {
   if (total <= 4) return ['on target', 'tag-good'];
   if (total <= 5.5) return ['over', 'tag-warn'];
   return ['way over', 'tag-bad'];
 }
-
+ 
 function switchTab(t, btn) {
   document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -176,7 +219,7 @@ function switchTab(t, btn) {
   if (t === 'history') renderHistory();
   if (t === 'trends') renderTrends();
 }
-
+ 
 function readFileAsBase64(file) {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -184,19 +227,19 @@ function readFileAsBase64(file) {
     reader.readAsDataURL(file);
   });
 }
-
+ 
 async function handleFile(e) {
   const files = Array.from(e.target.files).slice(0, 3);
   if (!files.length) return;
-
+ 
   const results = await Promise.all(files.map(readFileAsBase64));
   imagesBase64 = results.map(r => r.split(',')[1]);
-
+ 
   const grid = document.getElementById('preview-grid');
   grid.innerHTML = results.map(r => `<img src="${r}" />`).join('');
   grid.style.display = files.length > 1 ? 'grid' : 'block';
   if (files.length === 1) { grid.querySelector('img').style.cssText = 'width:100%;border-radius:8px;max-height:200px;object-fit:contain;margin-bottom:10px;'; }
-
+ 
   document.getElementById('upload-count').textContent = `${files.length} screenshot${files.length > 1 ? 's' : ''} selected`;
   document.getElementById('upload-zone').style.display = 'none';
   document.getElementById('reset-btn').style.display = 'inline';
@@ -205,7 +248,7 @@ async function handleFile(e) {
   document.getElementById('data-form').style.display = 'none';
   await extractData();
 }
-
+ 
 async function extractData() {
   try {
     const imageContent = imagesBase64.map(b64 => ({
@@ -213,14 +256,7 @@ async function extractData() {
     }));
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{
-          role: 'user',
-          content: [
-            ...imageContent,
+      headers: { 'Content-Type': 'application/json', 'x-api-key': getKey(), 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
             { type: 'text', text: 'These are iPhone Screen Time screenshots showing different views of the same day. Combine all visible data and respond ONLY with a JSON object, no markdown, no backticks, no explanation. Fields (use null if not visible): {"total_hours":number,"social_hours":number,"communication_hours":number,"pickups":number,"apps":[{"name":string,"hours":number}]} Include top apps by time, up to 5. Convert all times to decimal hours (1h 30m = 1.5). For social_hours use the Social category total. For communication_hours use Snapchat + Messages combined.' }
           ]
         }]
@@ -245,7 +281,7 @@ async function extractData() {
   document.getElementById('extract-loading').style.display = 'none';
   document.getElementById('data-form').style.display = 'block';
 }
-
+ 
 async function saveAndAnalyze() {
   document.getElementById('save-btn').style.display = 'none';
   const entry = {
@@ -264,25 +300,19 @@ async function saveAndAnalyze() {
   entries.unshift(entry);
   if (entries.length > 30) entries = entries.slice(0,30);
   saveEntries();
-
+ 
   document.getElementById('analysis-card').style.display = 'block';
   document.getElementById('analysis-loading').style.display = 'flex';
   document.getElementById('analysis-text').textContent = '';
-
+ 
   const histText = entries.slice(0,7).map((e,i) =>
     `${i===0?'Today':e.date}: ${e.total}h total, ${e.social}h social, ${e.comm}h communication, ${e.pickups} pickups`
   ).join('\n');
-
+ 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{
-          role: 'user',
-          content: `You are a personal screen time coach for Cooper, a high school student trying to cut phone usage. Goals: total under 4h/day, social media (Instagram) under 1.5h/day. Snapchat is communication, acceptable. Productivity & Finance time (Claude, ChatGPT, Fidelity) is good usage.\n\nData:\n${histText}\n\nGive Cooper a direct, honest 3-4 paragraph callout. Lead with today vs his goals. Call out specific trends if history exists. End with ONE concrete action for tomorrow. Talk like a coach who knows him — no fluff, no generic advice. Under 200 words.`
+      headers: { 'Content-Type': 'application/json', 'x-api-key': getKey(), 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, for Cooper, a high school student trying to cut phone usage. Goals: total under 4h/day, social media (Instagram) under 1.5h/day. Snapchat is communication, acceptable. Productivity & Finance time (Claude, ChatGPT, Fidelity) is good usage.\n\nData:\n${histText}\n\nGive Cooper a direct, honest 3-4 paragraph callout. Lead with today vs his goals. Call out specific trends if history exists. End with ONE concrete action for tomorrow. Talk like a coach who knows him — no fluff, no generic advice. Under 200 words.`
         }]
       })
     });
@@ -293,7 +323,7 @@ async function saveAndAnalyze() {
   }
   document.getElementById('analysis-loading').style.display = 'none';
 }
-
+ 
 function resetLog() {
   imagesBase64 = [];
   document.getElementById('preview-grid').style.display = 'none';
@@ -307,7 +337,7 @@ function resetLog() {
   document.getElementById('file-input').value = '';
   ['f-total','f-social','f-comm','f-pickups','app1n','app1t','app2n','app2t','app3n','app3t'].forEach(id => document.getElementById(id).value = '');
 }
-
+ 
 function renderHistory() {
   const el = document.getElementById('history-list');
   if (!entries.length) { el.innerHTML = '<div class="empty">No entries yet. Log your first day to get started.</div>'; return; }
@@ -322,7 +352,7 @@ function renderHistory() {
     </div>`;
   }).join('');
 }
-
+ 
 function renderTrends() {
   const el = document.getElementById('trends-content');
   if (!entries.length) { el.innerHTML = '<div class="card"><div class="empty">Log at least one day to see trends.</div></div>'; return; }
@@ -331,7 +361,7 @@ function renderTrends() {
   const avgSocial = (recent.reduce((a,e)=>a+e.social,0)/recent.length).toFixed(1);
   const best = recent.reduce((a,b)=>b.total<a.total?b:a);
   const max = Math.max(...recent.map(e=>e.total),1);
-
+ 
   el.innerHTML = `
     <div class="stat-grid">
       <div class="stat"><div class="stat-lbl">Avg daily</div><div class="stat-val">${avgTotal}h</div><div class="stat-sub">total</div></div>
@@ -361,3 +391,4 @@ function renderTrends() {
 </script>
 </body>
 </html>
+ 
