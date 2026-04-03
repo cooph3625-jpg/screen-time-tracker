@@ -22,8 +22,10 @@
   .upload-zone p { font-size: 14px; color: #aaa; }
   .upload-zone small { font-size: 12px; color: #666; }
   #file-input { display: none; }
-  #preview-img { width: 100%; border-radius: 8px; max-height: 200px; object-fit: contain; margin-bottom: 10px; display: none; }
+  .preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+  .preview-grid img { width: 100%; border-radius: 6px; aspect-ratio: 9/16; object-fit: cover; }
   .reset-btn { font-size: 12px; color: #666; background: none; border: none; cursor: pointer; font-family: inherit; padding: 0; }
+  .upload-count { font-size: 12px; color: #5a9a5a; margin-top: 8px; text-align: center; }
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
   .field label { display: block; font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
   .field input { width: 100%; padding: 9px 11px; background: #111; border: 1px solid #333; border-radius: 8px; color: #f0f0f0; font-size: 14px; font-family: inherit; }
@@ -66,29 +68,30 @@
 </style>
 </head>
 <body>
- 
+
 <h1>Screen time tracker</h1>
 <p class="sub">Upload your screenshot — Claude reads it automatically</p>
- 
+
 <div class="tabs">
   <button class="tab active" onclick="switchTab('log', this)">Log today</button>
   <button class="tab" onclick="switchTab('history', this)">History</button>
   <button class="tab" onclick="switchTab('trends', this)">Trends</button>
 </div>
- 
+
 <div id="tab-log" class="section active">
   <div class="card">
     <div class="card-label">Step 1 — upload screenshot</div>
     <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
       <div class="upload-icon">📱</div>
-      <p>Tap to upload your screen time screenshot</p>
-      <small>iPhone Screen Time or Android Digital Wellbeing</small>
+      <p>Tap to upload your screen time screenshots</p>
+      <small>Select up to 3 screenshots at once for best results</small>
     </div>
-    <input type="file" id="file-input" accept="image/*" onchange="handleFile(event)" />
-    <img id="preview-img" />
+    <input type="file" id="file-input" accept="image/*" multiple onchange="handleFile(event)" />
+    <div class="preview-grid" id="preview-grid" style="display:none"></div>
+    <div class="upload-count" id="upload-count"></div>
     <button class="reset-btn" id="reset-btn" style="display:none" onclick="resetLog()">✕ Remove and re-upload</button>
   </div>
- 
+
   <div class="card" id="form-card" style="display:none">
     <div class="card-label">Step 2 — confirm extracted data</div>
     <div class="loading" id="extract-loading">
@@ -118,7 +121,7 @@
       <button class="btn-primary" id="save-btn" onclick="saveAndAnalyze()">Save and get analysis →</button>
     </div>
   </div>
- 
+
   <div class="card" id="analysis-card" style="display:none">
     <div class="card-label">Claude's analysis</div>
     <div class="loading" id="analysis-loading" style="display:none">
@@ -128,29 +131,29 @@
     <div class="analysis-text" id="analysis-text"></div>
   </div>
 </div>
- 
+
 <div id="tab-history" class="section">
   <div class="card">
     <div class="card-label">Past entries</div>
     <div id="history-list"></div>
   </div>
 </div>
- 
+
 <div id="tab-trends" class="section">
   <div id="trends-content"></div>
 </div>
- 
+
 <script>
 const STORAGE_KEY = 'st_v2';
 let entries = [];
-let imgBase64 = null;
- 
+let imagesBase64 = [];
+
 try { const d = localStorage.getItem(STORAGE_KEY); if (d) entries = JSON.parse(d); } catch(e) {}
- 
+
 function saveEntries() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); } catch(e) {}
 }
- 
+
 function fmtH(h) {
   const hrs = Math.floor(h);
   const mins = Math.round((h - hrs) * 60);
@@ -158,13 +161,13 @@ function fmtH(h) {
   if (mins === 0) return hrs + 'h';
   return hrs + 'h ' + mins + 'm';
 }
- 
+
 function tagFor(total) {
   if (total <= 4) return ['on target', 'tag-good'];
   if (total <= 5.5) return ['over', 'tag-warn'];
   return ['way over', 'tag-bad'];
 }
- 
+
 function switchTab(t, btn) {
   document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -173,28 +176,41 @@ function switchTab(t, btn) {
   if (t === 'history') renderHistory();
   if (t === 'trends') renderTrends();
 }
- 
-function handleFile(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async (ev) => {
-    const dataUrl = ev.target.result;
-    imgBase64 = dataUrl.split(',')[1];
-    document.getElementById('preview-img').src = dataUrl;
-    document.getElementById('preview-img').style.display = 'block';
-    document.getElementById('upload-zone').style.display = 'none';
-    document.getElementById('reset-btn').style.display = 'inline';
-    document.getElementById('form-card').style.display = 'block';
-    document.getElementById('extract-loading').style.display = 'flex';
-    document.getElementById('data-form').style.display = 'none';
-    await extractData();
-  };
-  reader.readAsDataURL(file);
+
+function readFileAsBase64(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => resolve(ev.target.result);
+    reader.readAsDataURL(file);
+  });
 }
- 
+
+async function handleFile(e) {
+  const files = Array.from(e.target.files).slice(0, 3);
+  if (!files.length) return;
+
+  const results = await Promise.all(files.map(readFileAsBase64));
+  imagesBase64 = results.map(r => r.split(',')[1]);
+
+  const grid = document.getElementById('preview-grid');
+  grid.innerHTML = results.map(r => `<img src="${r}" />`).join('');
+  grid.style.display = files.length > 1 ? 'grid' : 'block';
+  if (files.length === 1) { grid.querySelector('img').style.cssText = 'width:100%;border-radius:8px;max-height:200px;object-fit:contain;margin-bottom:10px;'; }
+
+  document.getElementById('upload-count').textContent = `${files.length} screenshot${files.length > 1 ? 's' : ''} selected`;
+  document.getElementById('upload-zone').style.display = 'none';
+  document.getElementById('reset-btn').style.display = 'inline';
+  document.getElementById('form-card').style.display = 'block';
+  document.getElementById('extract-loading').style.display = 'flex';
+  document.getElementById('data-form').style.display = 'none';
+  await extractData();
+}
+
 async function extractData() {
   try {
+    const imageContent = imagesBase64.map(b64 => ({
+      type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 }
+    }));
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
@@ -204,8 +220,8 @@ async function extractData() {
         messages: [{
           role: 'user',
           content: [
-            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imgBase64 } },
-            { type: 'text', text: 'This is an iPhone Screen Time screenshot. Extract data and respond ONLY with a JSON object, no markdown, no backticks, no explanation. Fields (use null if not visible): {"total_hours":number,"social_hours":number,"communication_hours":number,"pickups":number,"apps":[{"name":string,"hours":number}]} Top 3 apps by time. Convert all times to decimal hours (1h 30m = 1.5).' }
+            ...imageContent,
+            { type: 'text', text: 'These are iPhone Screen Time screenshots showing different views of the same day. Combine all visible data and respond ONLY with a JSON object, no markdown, no backticks, no explanation. Fields (use null if not visible): {"total_hours":number,"social_hours":number,"communication_hours":number,"pickups":number,"apps":[{"name":string,"hours":number}]} Include top apps by time, up to 5. Convert all times to decimal hours (1h 30m = 1.5). For social_hours use the Social category total. For communication_hours use Snapchat + Messages combined.' }
           ]
         }]
       })
@@ -229,7 +245,7 @@ async function extractData() {
   document.getElementById('extract-loading').style.display = 'none';
   document.getElementById('data-form').style.display = 'block';
 }
- 
+
 async function saveAndAnalyze() {
   document.getElementById('save-btn').style.display = 'none';
   const entry = {
@@ -248,15 +264,15 @@ async function saveAndAnalyze() {
   entries.unshift(entry);
   if (entries.length > 30) entries = entries.slice(0,30);
   saveEntries();
- 
+
   document.getElementById('analysis-card').style.display = 'block';
   document.getElementById('analysis-loading').style.display = 'flex';
   document.getElementById('analysis-text').textContent = '';
- 
+
   const histText = entries.slice(0,7).map((e,i) =>
     `${i===0?'Today':e.date}: ${e.total}h total, ${e.social}h social, ${e.comm}h communication, ${e.pickups} pickups`
   ).join('\n');
- 
+
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -277,10 +293,12 @@ async function saveAndAnalyze() {
   }
   document.getElementById('analysis-loading').style.display = 'none';
 }
- 
+
 function resetLog() {
-  imgBase64 = null;
-  document.getElementById('preview-img').style.display = 'none';
+  imagesBase64 = [];
+  document.getElementById('preview-grid').style.display = 'none';
+  document.getElementById('preview-grid').innerHTML = '';
+  document.getElementById('upload-count').textContent = '';
   document.getElementById('upload-zone').style.display = 'block';
   document.getElementById('reset-btn').style.display = 'none';
   document.getElementById('form-card').style.display = 'none';
@@ -289,7 +307,7 @@ function resetLog() {
   document.getElementById('file-input').value = '';
   ['f-total','f-social','f-comm','f-pickups','app1n','app1t','app2n','app2t','app3n','app3t'].forEach(id => document.getElementById(id).value = '');
 }
- 
+
 function renderHistory() {
   const el = document.getElementById('history-list');
   if (!entries.length) { el.innerHTML = '<div class="empty">No entries yet. Log your first day to get started.</div>'; return; }
@@ -304,7 +322,7 @@ function renderHistory() {
     </div>`;
   }).join('');
 }
- 
+
 function renderTrends() {
   const el = document.getElementById('trends-content');
   if (!entries.length) { el.innerHTML = '<div class="card"><div class="empty">Log at least one day to see trends.</div></div>'; return; }
@@ -313,7 +331,7 @@ function renderTrends() {
   const avgSocial = (recent.reduce((a,e)=>a+e.social,0)/recent.length).toFixed(1);
   const best = recent.reduce((a,b)=>b.total<a.total?b:a);
   const max = Math.max(...recent.map(e=>e.total),1);
- 
+
   el.innerHTML = `
     <div class="stat-grid">
       <div class="stat"><div class="stat-lbl">Avg daily</div><div class="stat-val">${avgTotal}h</div><div class="stat-sub">total</div></div>
@@ -343,4 +361,3 @@ function renderTrends() {
 </script>
 </body>
 </html>
- 
