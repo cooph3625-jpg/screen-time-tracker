@@ -1,199 +1,441 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Screen Time Tracker</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #0a0a0a; color: #f0f0f0; min-height: 100vh; padding: 20px 16px 40px; }
-h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-.sub { font-size: 13px; color: #777; margin-bottom: 20px; }
-.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
-.tab { padding: 7px 14px; border-radius: 8px; border: 1px solid #333; font-size: 13px; cursor: pointer; background: transparent; color: #777; font-family: inherit; }
-.tab.active { background: #222; color: #f0f0f0; font-weight: 600; border-color: #555; }
-.page { display: none; }
-.page.active { display: block; }
-.card { background: #181818; border: 1px solid #2a2a2a; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
-.clabel { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
-.upload-box { border: 1px dashed #444; border-radius: 10px; padding: 30px 16px; text-align: center; cursor: pointer; }
-.upload-box:active { background: #1e1e1e; }
-.upload-box .ico { font-size: 34px; margin-bottom: 8px; }
-.upload-box p { font-size: 14px; color: #aaa; }
-.upload-box small { font-size: 12px; color: #555; }
-.thumb-row { display: flex; gap: 6px; margin-bottom: 8px; }
-.thumb-row img { flex: 1; border-radius: 6px; max-height: 120px; object-fit: cover; }
-.green { color: #5a9a5a; font-size: 12px; }
-.ghost { font-size: 12px; color: #555; background: none; border: none; cursor: pointer; font-family: inherit; padding: 0; margin-top: 4px; }
-.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-.field label { display: block; font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
-.field input { width: 100%; padding: 9px 10px; background: #111; border: 1px solid #2a2a2a; border-radius: 8px; color: #f0f0f0; font-size: 14px; font-family: inherit; }
-.field input:focus { outline: none; border-color: #555; }
-.app-row { display: grid; grid-template-columns: 1fr 72px; gap: 8px; margin-bottom: 8px; }
-.slabel { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.07em; margin: 12px 0 8px; }
-.btn { width: 100%; padding: 12px; background: #f0f0f0; color: #0a0a0a; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 8px; }
-.btn:active { opacity: 0.8; }
-.spin { display: flex; align-items: center; gap: 8px; padding: 10px 0; }
-.spin span { font-size: 13px; color: #777; }
-.dots { display: flex; gap: 4px; }
-.dot { width: 6px; height: 6px; border-radius: 50%; background: #555; animation: blink 1.2s infinite; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0d0d0d;color:#f0f0f0;padding:24px 16px 60px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+.sub{font-size:13px;color:#666;margin-bottom:24px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+.tab{padding:8px 16px;border-radius:8px;border:1px solid #2a2a2a;font-size:13px;cursor:pointer;background:transparent;color:#666;font-family:inherit}
+.tab.on{background:#1e1e1e;color:#f0f0f0;font-weight:600;border-color:#444}
+.pg{display:none}
+.pg.on{display:block}
+.card{background:#161616;border:1px solid #252525;border-radius:12px;padding:16px;margin-bottom:12px}
+.lbl{font-size:10px;color:#444;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+.upload-area{border:1px dashed #333;border-radius:10px;padding:36px 16px;text-align:center;cursor:pointer}
+.upload-area:active{background:#1a1a1a}
+.upload-area .icon{font-size:36px;margin-bottom:10px}
+.upload-area .title{font-size:15px;color:#bbb;margin-bottom:4px}
+.upload-area .hint{font-size:12px;color:#444}
+.thumbs{display:flex;gap:6px;margin:10px 0}
+.thumbs img{flex:1;height:100px;object-fit:cover;border-radius:6px}
+.status-line{font-size:12px;margin-top:6px}
+.green{color:#4a8a4a}
+.red{color:#a04040}
+.ghost-btn{font-size:12px;color:#444;background:none;border:none;cursor:pointer;font-family:inherit;padding:0;margin-top:4px;display:block}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.field label{display:block;font-size:10px;color:#444;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.field input{width:100%;padding:10px 11px;background:#0d0d0d;border:1px solid #252525;border-radius:8px;color:#f0f0f0;font-size:15px;font-family:inherit}
+.field input:focus{outline:none;border-color:#444}
+.section-lbl{font-size:10px;color:#333;text-transform:uppercase;letter-spacing:.07em;margin:14px 0 8px}
+.app-row{display:grid;grid-template-columns:1fr 80px;gap:8px;margin-bottom:8px}
+.big-btn{width:100%;padding:13px;background:#efefef;color:#0d0d0d;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+.big-btn:active{opacity:.8}
+.big-btn:disabled{opacity:.5;cursor:not-allowed}
+.spinner{display:flex;align-items:center;gap:8px;padding:12px 0}
+.spinner span{font-size:13px;color:#555}
+.dots{display:flex;gap:4px}
+.dot{width:6px;height:6px;border-radius:50%;background:#444;animation:pulse 1.2s infinite}
 .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
-@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
-.analysis { font-size: 14px; line-height: 1.75; color: #ccc; white-space: pre-wrap; }
-.warn-box { background: #1a0808; border: 1px solid #5a2020; border-radius: 10px; padding: 12px; margin-bottom: 12px; font-size: 13px; color: #c86060; }
-.entry { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #1e1e1e; }
-.entry:last-child { border-bottom: none; }
-.entry-left { flex: 1; }
-.entry-date { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 7px; margin-bottom: 3px; }
-.entry-meta { font-size: 12px; color: #555; }
-.entry-total { font-size: 18px; font-weight: 700; }
-.tag { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 5px; }
-.tg { background: #0f2a0f; color: #5a9a5a; }
-.tw { background: #2a1a00; color: #c87820; }
-.tb { background: #2a0808; color: #c85050; }
-.stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
-.stat { background: #181818; border-radius: 10px; padding: 11px 10px; }
-.stat-l { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing:.05em; margin-bottom: 4px; }
-.stat-v { font-size: 20px; font-weight: 700; }
-.stat-s { font-size: 10px; color: #555; margin-top: 2px; }
-.bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
-.bar-lbl { font-size: 11px; color: #555; width: 60px; flex-shrink: 0; }
-.bar-wrap { flex: 1; }
-.bar-bg { background: #1e1e1e; border-radius: 99px; height: 5px; overflow: hidden; margin-bottom: 3px; }
-.bar-fill { height: 100%; border-radius: 99px; }
-.bar-num { font-size: 11px; color: #666; min-width: 28px; text-align: right; }
-.leg { display: flex; gap: 12px; margin-top: 8px; }
-.leg-i { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #555; }
-.leg-d { width: 10px; height: 4px; border-radius: 99px; }
-.empty { text-align: center; color: #444; font-size: 14px; padding: 28px 0; }
-.ok-box { background: #0a1a0a; border: 1px solid #1a4a1a; border-radius: 10px; padding: 12px; font-size: 13px; color: #5a9a5a; margin-top: 8px; display: none; }
+@keyframes pulse{0%,80%,100%{opacity:.15}40%{opacity:1}}
+.analysis-text{font-size:14px;line-height:1.8;color:#ccc;white-space:pre-wrap}
+.warn{background:#160808;border:1px solid #3a1010;border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;color:#a05050}
+.entry{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #1a1a1a}
+.entry:last-child{border-bottom:none}
+.entry-info{}
+.entry-date{font-size:14px;font-weight:600;display:flex;align-items:center;gap:7px;margin-bottom:3px}
+.entry-meta{font-size:12px;color:#444}
+.entry-total{font-size:19px;font-weight:700}
+.badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px}
+.b-good{background:#0a1f0a;color:#4a8a4a}
+.b-warn{background:#1f1200;color:#a07020}
+.b-bad{background:#1f0a0a;color:#a04040}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat{background:#161616;border-radius:10px;padding:12px}
+.stat-lbl{font-size:10px;color:#444;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.stat-val{font-size:21px;font-weight:700}
+.stat-sub{font-size:10px;color:#444;margin-top:2px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.bar-date{font-size:11px;color:#444;width:58px;flex-shrink:0}
+.bar-tracks{flex:1}
+.track{background:#1a1a1a;border-radius:99px;height:5px;overflow:hidden;margin-bottom:3px}
+.fill{height:100%;border-radius:99px}
+.bar-val{font-size:11px;color:#555;min-width:26px;text-align:right}
+.legend{display:flex;gap:12px;margin-top:8px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#444}
+.legend-dot{width:10px;height:4px;border-radius:99px}
+.empty{text-align:center;color:#333;font-size:14px;padding:30px 0}
+.key-saved{background:#0a180a;border:1px solid #1a3a1a;border-radius:8px;padding:10px 12px;font-size:13px;color:#4a8a4a;margin-top:8px;display:none}
+.key-err{font-size:13px;color:#a04040;margin-top:8px;display:none}
 </style>
 </head>
 <body>
  
 <h1>Screen time tracker</h1>
-<p class="sub">Upload your screenshots — Claude reads them automatically</p>
+<p class="sub">Upload screenshots · Claude reads them · Get your analysis</p>
  
 <div class="tabs">
-  <button class="tab active" id="tab-btn-log" onclick="show('log')">Log today</button>
-  <button class="tab" id="tab-btn-history" onclick="show('history')">History</button>
-  <button class="tab" id="tab-btn-trends" onclick="show('trends')">Trends</button>
-  <button class="tab" id="tab-btn-settings" onclick="show('settings')">Settings</button>
+  <button class="tab on" id="t-log" onclick="nav('log')">Log today</button>
+  <button class="tab" id="t-history" onclick="nav('history')">History</button>
+  <button class="tab" id="t-trends" onclick="nav('trends')">Trends</button>
+  <button class="tab" id="t-settings" onclick="nav('settings')">Settings</button>
 </div>
  
-<div class="page active" id="page-log">
-  <div id="warn" class="warn-box" style="display:none">⚠️ No API key saved. Tap <strong>Settings</strong> to add your Anthropic key first.</div>
-  <div class="card" id="upload-card">
-    <div class="clabel">Step 1 — upload screenshots</div>
-    <div class="upload-box" id="upload-box" onclick="document.getElementById('file-in').click()">
-      <div class="ico">📱</div>
-      <p>Tap to select screenshots</p>
-      <small>Pick up to 3 at once for best results</small>
-    </div>
-    <input type="file" id="file-in" accept="image/*" multiple style="display:none" onchange="onFiles(event)" />
-    <div id="thumbs" style="display:none"></div>
-    <div id="file-count" class="green" style="margin-top:6px;"></div>
-    <button class="ghost" id="re-upload" style="display:none" onclick="resetUpload()">✕ Remove and re-upload</button>
+<!-- LOG -->
+<div class="pg on" id="pg-log">
+  <div id="no-key-warn" class="warn" style="display:none">
+    ⚠️ No API key found. Tap <strong>Settings</strong> and paste your Anthropic key before uploading.
   </div>
-  <div class="card" id="form-card" style="display:none">
-    <div class="clabel">Step 2 — confirm data</div>
-    <div class="spin" id="reading-spin">
+ 
+  <div class="card">
+    <div class="lbl">Step 1 — upload screenshots</div>
+    <div class="upload-area" id="drop-zone" onclick="document.getElementById('picker').click()">
+      <div class="icon">📱</div>
+      <div class="title">Tap to pick screenshots</div>
+      <div class="hint">Select up to 3 at once · iPhone Screen Time</div>
+    </div>
+    <input type="file" id="picker" accept="image/*" multiple style="display:none" onchange="filesChosen(event)"/>
+    <div id="thumb-row" class="thumbs" style="display:none"></div>
+    <div id="file-status" class="status-line"></div>
+    <button class="ghost-btn" id="clear-btn" style="display:none" onclick="clearAll()">✕ Clear and re-upload</button>
+  </div>
+ 
+  <div class="card" id="data-card" style="display:none">
+    <div class="lbl">Step 2 — confirm extracted data</div>
+    <div class="spinner" id="read-spin">
       <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
       <span>Reading your screenshots...</span>
     </div>
-    <div id="the-form" style="display:none">
+    <div id="data-form" style="display:none">
       <div class="g2">
-        <div class="field"><label>Total (hrs)</label><input type="number" id="f-total" step="0.1" placeholder="6.5" /></div>
-        <div class="field"><label>Social media (hrs)</label><input type="number" id="f-social" step="0.1" placeholder="2.0" /></div>
-        <div class="field"><label>Communication (hrs)</label><input type="number" id="f-comm" step="0.1" placeholder="0.5" /></div>
-        <div class="field"><label>Pickups</label><input type="number" id="f-pickups" placeholder="42" /></div>
+        <div class="field"><label>Total screen time (hrs)</label><input type="number" id="v-total" step="0.1" min="0" placeholder="6.3"/></div>
+        <div class="field"><label>Social media (hrs)</label><input type="number" id="v-social" step="0.1" min="0" placeholder="2.5"/></div>
+        <div class="field"><label>Communication (hrs)</label><input type="number" id="v-comm" step="0.1" min="0" placeholder="1.0"/></div>
+        <div class="field"><label>Pickups</label><input type="number" id="v-pickups" min="0" placeholder="40"/></div>
       </div>
-      <div class="slabel">Top apps (optional)</div>
+      <div class="section-lbl">Top apps</div>
       <div class="app-row">
-        <div class="field"><label>App</label><input type="text" id="a1n" placeholder="Instagram" /></div>
-        <div class="field"><label>Hrs</label><input type="number" id="a1t" step="0.1" /></div>
-      </div>
-      <div class="app-row">
-        <div class="field"><label>App</label><input type="text" id="a2n" placeholder="Snapchat" /></div>
-        <div class="field"><label>Hrs</label><input type="number" id="a2t" step="0.1" /></div>
+        <div class="field"><label>App name</label><input type="text" id="n1" placeholder="Instagram"/></div>
+        <div class="field"><label>Hours</label><input type="number" id="h1" step="0.1" min="0"/></div>
       </div>
       <div class="app-row">
-        <div class="field"><label>App</label><input type="text" id="a3n" placeholder="YouTube" /></div>
-        <div class="field"><label>Hrs</label><input type="number" id="a3t" step="0.1" /></div>
+        <div class="field"><label>App name</label><input type="text" id="n2" placeholder="Snapchat"/></div>
+        <div class="field"><label>Hours</label><input type="number" id="h2" step="0.1" min="0"/></div>
       </div>
-      <button class="btn" id="save-btn" onclick="saveAndAnalyze()">Save and get analysis →</button>
+      <div class="app-row">
+        <div class="field"><label>App name</label><input type="text" id="n3" placeholder="YouTube"/></div>
+        <div class="field"><label>Hours</label><input type="number" id="h3" step="0.1" min="0"/></div>
+      </div>
+      <button class="big-btn" id="save-btn" onclick="saveEntry()">Save and get analysis →</button>
     </div>
   </div>
-  <div class="card" id="analysis-card" style="display:none">
-    <div class="clabel">Claude's analysis</div>
-    <div class="spin" id="analysis-spin" style="display:none">
+ 
+  <div class="card" id="result-card" style="display:none">
+    <div class="lbl">Claude's analysis</div>
+    <div class="spinner" id="analyze-spin" style="display:none">
       <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-      <span>Analyzing your trends...</span>
+      <span>Analyzing your data...</span>
     </div>
-    <div class="analysis" id="analysis-out"></div>
+    <div class="analysis-text" id="analysis-out"></div>
   </div>
 </div>
  
-<div class="page" id="page-history">
+<!-- HISTORY -->
+<div class="pg" id="pg-history">
   <div class="card">
-    <div class="clabel">Past entries</div>
-    <div id="history-out"></div>
+    <div class="lbl">All entries</div>
+    <div id="history-list"></div>
   </div>
 </div>
  
-<div class="page" id="page-trends">
-  <div id="trends-out"></div>
+<!-- TRENDS -->
+<div class="pg" id="pg-trends">
+  <div id="trends-body"></div>
 </div>
  
-<div class="page" id="page-settings">
+<!-- SETTINGS -->
+<div class="pg" id="pg-settings">
   <div class="card">
-    <div class="clabel">Anthropic API key</div>
-    <p style="font-size:13px;color:#666;margin-bottom:12px;">Saved only on this device. Never sent to GitHub or anyone else.</p>
-    <div class="field" style="margin-bottom:10px;">
-      <label>Paste your key here</label>
-      <input type="password" id="key-input" placeholder="sk-ant-api03-..." style="font-family:monospace;font-size:13px;" />
+    <div class="lbl">Anthropic API key</div>
+    <p style="font-size:13px;color:#555;margin-bottom:14px">Stored only on this device in your browser. Never uploaded to GitHub or anywhere else.</p>
+    <div class="field" style="margin-bottom:10px">
+      <label>Your API key</label>
+      <input type="password" id="key-field" placeholder="sk-ant-api03-..." style="font-family:monospace;font-size:13px"/>
     </div>
-    <button class="btn" onclick="saveKey()">Save key</button>
-    <div class="ok-box" id="key-ok">✓ Key saved — you're all set. Go to Log today.</div>
-    <div id="key-err" style="font-size:13px;color:#c85050;margin-top:8px;display:none;"></div>
+    <button class="big-btn" onclick="storeKey()">Save key</button>
+    <div class="key-saved" id="key-saved">✓ Key saved successfully. Go to Log today to start tracking.</div>
+    <div class="key-err" id="key-err"></div>
   </div>
 </div>
  
 <script>
-const SK = 'st_v2';
-const KK = 'st_key';
+// ── storage ──────────────────────────────────────────────
+const EKEY = 'stt_entries';
+const KKEY = 'stt_apikey';
 let entries = [];
-let imgs = [];
+try { entries = JSON.parse(localStorage.getItem(EKEY)) || []; } catch(_) {}
+const getKey = () => localStorage.getItem(KKEY) || '';
+const save = () => { try { localStorage.setItem(EKEY, JSON.stringify(entries)); } catch(_) {} };
  
-try { entries = JSON.parse(localStorage.getItem(SK)) || []; } catch(e) { entries = []; }
- 
-function persist() { try { localStorage.setItem(SK, JSON.stringify(entries)); } catch(e) {} }
-function getKey() { return localStorage.getItem(KK) || ''; }
- 
-function show(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  document.getElementById('tab-btn-' + name).classList.add('active');
-  if (name === 'history') buildHistory();
-  if (name === 'trends') buildTrends();
-  if (name === 'log') checkKey();
+// ── nav ───────────────────────────────────────────────────
+function nav(name) {
+  ['log','history','trends','settings'].forEach(n => {
+    document.getElementById('pg-' + n).classList.remove('on');
+    document.getElementById('t-' + n).classList.remove('on');
+  });
+  document.getElementById('pg-' + name).classList.add('on');
+  document.getElementById('t-' + name).classList.add('on');
+  if (name === 'log') checkApiKey();
+  if (name === 'history') renderHistory();
+  if (name === 'trends') renderTrends();
 }
  
-function checkKey() {
-  document.getElementById('warn').style.display = getKey() ? 'none' : 'block';
+// ── api key ───────────────────────────────────────────────
+function checkApiKey() {
+  document.getElementById('no-key-warn').style.display = getKey() ? 'none' : 'block';
 }
  
-function saveKey() {
-  const v = document.getElementById('key-input').value.trim();
-  document.getElementById('key-err').style.display = 'none';
-  document.getElementById('key-ok').style.display = 'none';
-  if (!v) { document.getElementById('key-err').textContent = 'Please paste your API key.'; document.getElementById('key-err').style.display = 'block'; return; }
-  if (!v.startsWith('sk-ant-')) { document.getElementById('key-err').textContent = 'Key should start with sk-ant-'; document.getElementById('key-err').style.display = 'block'; return; }
-  localStorage.setItem(KK, v);
-  document.getElementById('key-ok').style.display = 'block';
+function storeKey() {
+  const v = document.getElementById('key-field').value.trim();
+  const errEl = document.getElementById('key-err');
+  const okEl = document.getElementById('key-saved');
+  errEl.style.display = 'none';
+  okEl.style.display = 'none';
+  if (!v) { errEl.textContent = 'Please paste your key.'; errEl.style.display = 'block'; return; }
+  if (!v.startsWith('sk-ant-')) { errEl.textContent = 'Key should start with sk-ant-'; errEl.style.display = 'block'; return; }
+  localStorage.setItem(KKEY, v);
+  okEl.style.display = 'block';
 }
  
+// ── file handling ─────────────────────────────────────────
+let imageData = []; // [{base64, mimeType}]
+ 
+function filesChosen(e) {
+  const files = Array.from(e.target.files).slice(0, 3);
+  if (!files.length) return;
+  Promise.all(files.map(readFile)).then(results => {
+    imageData = results;
+    showThumbs(results);
+    document.getElementById('file-status').textContent = results.length + ' screenshot' + (results.length > 1 ? 's' : '') + ' selected';
+    document.getElementById('file-status').className = 'status-line green';
+    document.getElementById('clear-btn').style.display = 'block';
+    document.getElementById('drop-zone').style.display = 'none';
+    document.getElementById('data-card').style.display = 'block';
+    document.getElementById('read-spin').style.display = 'flex';
+    document.getElementById('data-form').style.display = 'none';
+    readScreenshots();
+  });
+}
+ 
+function readFile(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const dataUrl = ev.target.result;
+      // detect real mime type from data URL
+      const mime = dataUrl.match(/data:([^;]+)/)[1];
+      resolve({ base64: dataUrl.split(',')[1], mimeType: mime, dataUrl });
+    };
+    reader.readAsDataURL(file);
+  });
+}
+ 
+function showThumbs(results) {
+  const el = document.getElementById('thumb-row');
+  el.innerHTML = results.map(r => `<img src="${r.dataUrl}"/>`).join('');
+  el.style.display = 'flex';
+}
+ 
+function clearAll() {
+  imageData = [];
+  document.getElementById('picker').value = '';
+  document.getElementById('thumb-row').style.display = 'none';
+  document.getElementById('thumb-row').innerHTML = '';
+  document.getElementById('file-status').textContent = '';
+  document.getElementById('clear-btn').style.display = 'none';
+  document.getElementById('drop-zone').style.display = 'block';
+  document.getElementById('data-card').style.display = 'none';
+  document.getElementById('result-card').style.display = 'none';
+  document.getElementById('save-btn').disabled = false;
+  document.getElementById('save-btn').textContent = 'Save and get analysis →';
+  document.getElementById('save-btn').style.display = 'block';
+  ['v-total','v-social','v-comm','v-pickups','n1','h1','n2','h2','n3','h3'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+ 
+// ── extraction ────────────────────────────────────────────
+async function readScreenshots() {
+  const key = getKey();
+  if (!key) {
+    document.getElementById('read-spin').style.display = 'none';
+    document.getElementById('data-form').style.display = 'block';
+    return;
+  }
+ 
+  const imageBlocks = imageData.map(img => ({
+    type: 'image',
+    source: { type: 'base64', media_type: img.mimeType, data: img.base64 }
+  }));
+ 
+  const prompt = `These are iPhone Screen Time screenshots showing usage data for the same day.
+ 
+Extract the data and respond with ONLY a JSON object. No explanation, no markdown fences, no extra text — just the raw JSON.
+ 
+Required format:
+{
+  "total_hours": number,
+  "social_hours": number,
+  "communication_hours": number,
+  "pickups": number,
+  "apps": [
+    {"name": "string", "hours": number},
+    {"name": "string", "hours": number},
+    {"name": "string", "hours": number}
+  ]
+}
+ 
+Rules:
+- Convert all durations to decimal hours. Example: 1h 46m = 1.77, 30m = 0.5, 53m = 0.88
+- total_hours = the main "Screen Time" total shown (e.g. "6h 17m" = 6.28)
+- social_hours = the "Social" category total
+- communication_hours = Snapchat hours + Messages hours combined
+- pickups = the Pickups number shown
+- apps = the top 3 individual apps by time with their exact hours
+- If a value is not visible in any screenshot, use null
+ 
+Do not guess. Only extract values you can see clearly.`;
+ 
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        messages: [{ role: 'user', content: [...imageBlocks, { type: 'text', text: prompt }] }]
+      })
+    });
+ 
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+ 
+    const raw = (data.content || []).map(c => c.text || '').join('').trim();
+    // strip any accidental markdown fences
+    const clean = raw.replace(/^```[a-z]*\n?/i,'').replace(/\n?```$/,'').trim();
+    const parsed = JSON.parse(clean);
+ 
+    document.getElementById('v-total').value   = parsed.total_hours    != null ? parsed.total_hours    : '';
+    document.getElementById('v-social').value  = parsed.social_hours   != null ? parsed.social_hours   : '';
+    document.getElementById('v-comm').value    = parsed.communication_hours != null ? parsed.communication_hours : '';
+    document.getElementById('v-pickups').value = parsed.pickups         != null ? parsed.pickups         : '';
+ 
+    const apps = Array.isArray(parsed.apps) ? parsed.apps : [];
+    document.getElementById('n1').value = apps[0]?.name  ?? '';
+    document.getElementById('h1').value = apps[0]?.hours != null ? apps[0].hours : '';
+    document.getElementById('n2').value = apps[1]?.name  ?? '';
+    document.getElementById('h2').value = apps[1]?.hours != null ? apps[1].hours : '';
+    document.getElementById('n3').value = apps[2]?.name  ?? '';
+    document.getElementById('h3').value = apps[2]?.hours != null ? apps[2].hours : '';
+ 
+  } catch(err) {
+    console.error('Extraction error:', err);
+    document.getElementById('file-status').textContent = 'Could not read screenshots automatically. Fill in manually.';
+    document.getElementById('file-status').className = 'status-line red';
+  }
+ 
+  document.getElementById('read-spin').style.display = 'none';
+  document.getElementById('data-form').style.display = 'block';
+}
+ 
+// ── save + analyze ────────────────────────────────────────
+async function saveEntry() {
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+ 
+  const entry = {
+    date: new Date().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}),
+    ts: Date.now(),
+    total:   parseFloat(document.getElementById('v-total').value)   || 0,
+    social:  parseFloat(document.getElementById('v-social').value)  || 0,
+    comm:    parseFloat(document.getElementById('v-comm').value)    || 0,
+    pickups: parseInt(document.getElementById('v-pickups').value)   || 0,
+    apps: [
+      { name: document.getElementById('n1').value, hours: parseFloat(document.getElementById('h1').value) || 0 },
+      { name: document.getElementById('n2').value, hours: parseFloat(document.getElementById('h2').value) || 0 },
+      { name: document.getElementById('n3').value, hours: parseFloat(document.getElementById('h3').value) || 0 },
+    ].filter(a => a.name.trim() !== '')
+  };
+ 
+  entries.unshift(entry);
+  if (entries.length > 60) entries = entries.slice(0, 60);
+  save();
+ 
+  btn.style.display = 'none';
+  document.getElementById('result-card').style.display = 'block';
+  document.getElementById('analyze-spin').style.display = 'flex';
+  document.getElementById('analysis-out').textContent = '';
+ 
+  const history = entries.slice(0, 7).map((e, i) =>
+    `${i === 0 ? 'Today' : e.date}: ${e.total}h total, ${e.social}h social media, ${e.comm}h communication (Snapchat), ${e.pickups} pickups`
+  ).join('\n');
+ 
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': getKey(),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 400,
+        messages: [{
+          role: 'user',
+          content: `You are a blunt screen time coach for Cooper, a 15-year-old competitive runner with D1 aspirations who is trying to cut phone usage.
+ 
+His daily goals:
+- Total screen time: under 4 hours
+- Instagram: under 30 minutes (his limit is set to 1hr but he wants to cut it)
+- Snapchat is his main communication tool — that usage is acceptable
+- Time on Claude, ChatGPT, Fidelity = productive and good
+ 
+His recent data:
+${history}
+ 
+Write a 3 paragraph coaching response. Be direct and honest like a coach who actually knows him. 
+Paragraph 1: How did today go vs his goals — be specific with the numbers.
+Paragraph 2: If there is history, point out any trend (improving, getting worse, staying flat).
+Paragraph 3: One specific action he should take tomorrow to improve.
+ 
+No fluff. No generic advice. Max 180 words total.`
+        }]
+      })
+    });
+ 
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    document.getElementById('analysis-out').textContent = (data.content || []).map(c => c.text || '').join('');
+  } catch(err) {
+    document.getElementById('analysis-out').textContent = 'Analysis failed: ' + err.message;
+  }
+ 
+  document.getElementById('analyze-spin').style.display = 'none';
+}
+ 
+// ── history ───────────────────────────────────────────────
 function fmtH(h) {
   h = parseFloat(h) || 0;
   const hr = Math.floor(h);
@@ -203,138 +445,74 @@ function fmtH(h) {
   return hr + 'h ' + mn + 'm';
 }
  
-function tagInfo(total) {
-  if (total <= 4) return ['on target', 'tg'];
-  if (total <= 5.5) return ['over', 'tw'];
-  return ['way over', 'tb'];
+function badgeFor(total) {
+  if (total <= 4)   return ['on target', 'b-good'];
+  if (total <= 5.5) return ['over',      'b-warn'];
+  return                   ['way over',  'b-bad'];
 }
  
-function readFile(file) {
-  return new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
-}
- 
-async function onFiles(e) {
-  const files = Array.from(e.target.files).slice(0, 3);
-  if (!files.length) return;
-  const dataUrls = await Promise.all(files.map(readFile));
-  imgs = dataUrls.map(u => u.split(',')[1]);
-  document.getElementById('thumbs').innerHTML = '<div class="thumb-row">' + dataUrls.map(u => `<img src="${u}" />`).join('') + '</div>';
-  document.getElementById('thumbs').style.display = 'block';
-  document.getElementById('upload-box').style.display = 'none';
-  document.getElementById('file-count').textContent = files.length + ' screenshot' + (files.length > 1 ? 's' : '') + ' selected';
-  document.getElementById('re-upload').style.display = 'inline';
-  document.getElementById('form-card').style.display = 'block';
-  document.getElementById('reading-spin').style.display = 'flex';
-  document.getElementById('the-form').style.display = 'none';
-  await extractData();
-}
- 
-async function extractData() {
-  const key = getKey();
-  if (!key) { document.getElementById('reading-spin').style.display = 'none'; document.getElementById('the-form').style.display = 'block'; return; }
-  try {
-    const imgBlocks = imgs.map(b64 => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } }));
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 800,
-        messages: [{ role: 'user', content: [...imgBlocks, { type: 'text', text: 'These are iPhone Screen Time screenshots of the same day. Extract all data and respond ONLY with raw JSON, no markdown, no backticks. Format: {"total_hours":number,"social_hours":number,"communication_hours":number,"pickups":number,"apps":[{"name":string,"hours":number}]} top 5 apps by time. Convert times to decimal hours (1h 30m = 1.5). For social_hours use the Social category total. For communication_hours add Snapchat + Messages. If a field is not visible use null.' }] }]
-      })
-    });
-    const data = await res.json();
-    const raw = (data.content || []).map(c => c.text || '').join('').replace(/```json|```/g,'').trim();
-    const p = JSON.parse(raw);
-    document.getElementById('f-total').value = p.total_hours ?? '';
-    document.getElementById('f-social').value = p.social_hours ?? '';
-    document.getElementById('f-comm').value = p.communication_hours ?? '';
-    document.getElementById('f-pickups').value = p.pickups ?? '';
-    const apps = p.apps || [];
-    document.getElementById('a1n').value = apps[0]?.name ?? '';
-    document.getElementById('a1t').value = apps[0]?.hours ?? '';
-    document.getElementById('a2n').value = apps[1]?.name ?? '';
-    document.getElementById('a2t').value = apps[1]?.hours ?? '';
-    document.getElementById('a3n').value = apps[2]?.name ?? '';
-    document.getElementById('a3t').value = apps[2]?.hours ?? '';
-  } catch(err) { console.error(err); }
-  document.getElementById('reading-spin').style.display = 'none';
-  document.getElementById('the-form').style.display = 'block';
-}
- 
-async function saveAndAnalyze() {
-  document.getElementById('save-btn').disabled = true;
-  document.getElementById('save-btn').textContent = 'Saving...';
-  const entry = {
-    date: new Date().toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}),
-    ts: Date.now(),
-    total: parseFloat(document.getElementById('f-total').value) || 0,
-    social: parseFloat(document.getElementById('f-social').value) || 0,
-    comm: parseFloat(document.getElementById('f-comm').value) || 0,
-    pickups: parseInt(document.getElementById('f-pickups').value) || 0,
-    apps: [{name:document.getElementById('a1n').value,hours:parseFloat(document.getElementById('a1t').value)||0},{name:document.getElementById('a2n').value,hours:parseFloat(document.getElementById('a2t').value)||0},{name:document.getElementById('a3n').value,hours:parseFloat(document.getElementById('a3t').value)||0}].filter(a=>a.name)
-  };
-  entries.unshift(entry);
-  if (entries.length > 30) entries = entries.slice(0,30);
-  persist();
-  document.getElementById('analysis-card').style.display = 'block';
-  document.getElementById('analysis-spin').style.display = 'flex';
-  document.getElementById('analysis-out').textContent = '';
-  document.getElementById('save-btn').style.display = 'none';
-  const hist = entries.slice(0,7).map((e,i) => `${i===0?'Today':e.date}: ${e.total}h total, ${e.social}h social, ${e.comm}h communication, ${e.pickups} pickups`).join('\n');
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': getKey(), 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: `You are a personal screen time coach for Cooper, a high school student trying to reduce phone usage. Goals: total under 4h/day, Instagram under 1.5h/day. Snapchat is communication so that's fine. Claude, ChatGPT, Fidelity = productive usage.\n\nData:\n${hist}\n\nDirect honest 3-4 paragraph coaching callout. Lead with today vs goals. Call out trends if history exists. End with ONE concrete action for tomorrow. Talk like a coach who knows him — no fluff. Under 200 words.` }]
-      })
-    });
-    const data = await res.json();
-    document.getElementById('analysis-out').textContent = (data.content||[]).map(c=>c.text||'').join('');
-  } catch(err) {
-    document.getElementById('analysis-out').textContent = 'Could not load analysis. Check your connection and try again.';
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (!entries.length) {
+    el.innerHTML = '<div class="empty">No entries yet — log your first day.</div>';
+    return;
   }
-  document.getElementById('analysis-spin').style.display = 'none';
+  el.innerHTML = entries.map(e => {
+    const [txt, cls] = badgeFor(e.total);
+    return `<div class="entry">
+      <div class="entry-info">
+        <div class="entry-date">${e.date} <span class="badge ${cls}">${txt}</span></div>
+        <div class="entry-meta">${fmtH(e.social)} social · ${fmtH(e.comm)} comm · ${e.pickups} pickups</div>
+      </div>
+      <div class="entry-total">${fmtH(e.total)}</div>
+    </div>`;
+  }).join('');
 }
  
-function resetUpload() {
-  imgs = [];
-  document.getElementById('file-in').value = '';
-  document.getElementById('thumbs').style.display = 'none';
-  document.getElementById('thumbs').innerHTML = '';
-  document.getElementById('file-count').textContent = '';
-  document.getElementById('upload-box').style.display = 'block';
-  document.getElementById('re-upload').style.display = 'none';
-  document.getElementById('form-card').style.display = 'none';
-  document.getElementById('analysis-card').style.display = 'none';
-  document.getElementById('save-btn').disabled = false;
-  document.getElementById('save-btn').textContent = 'Save and get analysis →';
-  document.getElementById('save-btn').style.display = 'block';
-  ['f-total','f-social','f-comm','f-pickups','a1n','a1t','a2n','a2t','a3n','a3t'].forEach(id => { document.getElementById(id).value = ''; });
+// ── trends ────────────────────────────────────────────────
+function renderTrends() {
+  const el = document.getElementById('trends-body');
+  if (!entries.length) {
+    el.innerHTML = '<div class="card"><div class="empty">Log at least one day to see trends.</div></div>';
+    return;
+  }
+  const r = entries.slice(0, 7);
+  const avgT = (r.reduce((a, e) => a + e.total,  0) / r.length).toFixed(1);
+  const avgS = (r.reduce((a, e) => a + e.social, 0) / r.length).toFixed(1);
+  const best = r.reduce((a, b) => b.total < a.total ? b : a);
+  const mx   = Math.max(...r.map(e => e.total), 1);
+ 
+  el.innerHTML = `
+    <div class="stat-row">
+      <div class="stat"><div class="stat-lbl">Avg total</div><div class="stat-val">${avgT}h</div><div class="stat-sub">per day</div></div>
+      <div class="stat"><div class="stat-lbl">Avg social</div><div class="stat-val">${avgS}h</div><div class="stat-sub">per day</div></div>
+      <div class="stat"><div class="stat-lbl">Best day</div><div class="stat-val">${fmtH(best.total)}</div><div class="stat-sub">${best.date}</div></div>
+    </div>
+    <div class="card">
+      <div class="lbl">Last 7 days</div>
+      ${r.map(e => {
+        const tw = Math.round((e.total  / mx) * 100);
+        const sw = Math.round((e.social / mx) * 100);
+        return `<div class="bar-row">
+          <span class="bar-date">${e.date}</span>
+          <div class="bar-tracks">
+            <div class="track"><div class="fill" style="width:${tw}%;background:#555"></div></div>
+            <div class="track"><div class="fill" style="width:${sw}%;background:#9a3a62"></div></div>
+          </div>
+          <span class="bar-val">${fmtH(e.total)}</span>
+        </div>`;
+      }).join('')}
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#555"></div>Total</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#9a3a62"></div>Social</div>
+      </div>
+    </div>`;
 }
  
-function buildHistory() {
-  const el = document.getElementById('history-out');
-  if (!entries.length) { el.innerHTML = '<div class="empty">No entries yet. Log your first day.</div>'; return; }
-  el.innerHTML = entries.map(e => { const [lbl,cls]=tagInfo(e.total); return `<div class="entry"><div class="entry-left"><div class="entry-date">${e.date} <span class="tag ${cls}">${lbl}</span></div><div class="entry-meta">${fmtH(e.social)} social &middot; ${fmtH(e.comm)} comm &middot; ${e.pickups} pickups</div></div><div class="entry-total">${fmtH(e.total)}</div></div>`; }).join('');
-}
- 
-function buildTrends() {
-  const el = document.getElementById('trends-out');
-  if (!entries.length) { el.innerHTML = '<div class="card"><div class="empty">Log at least one day to see trends.</div></div>'; return; }
-  const r = entries.slice(0,7);
-  const avgT = (r.reduce((a,e)=>a+e.total,0)/r.length).toFixed(1);
-  const avgS = (r.reduce((a,e)=>a+e.social,0)/r.length).toFixed(1);
-  const best = r.reduce((a,b)=>b.total<a.total?b:a);
-  const mx = Math.max(...r.map(e=>e.total),1);
-  el.innerHTML = `<div class="stats"><div class="stat"><div class="stat-l">Avg daily</div><div class="stat-v">${avgT}h</div><div class="stat-s">total</div></div><div class="stat"><div class="stat-l">Avg social</div><div class="stat-v">${avgS}h</div><div class="stat-s">per day</div></div><div class="stat"><div class="stat-l">Best day</div><div class="stat-v">${fmtH(best.total)}</div><div class="stat-s">${best.date}</div></div></div><div class="card"><div class="clabel">Daily totals vs social</div>${r.map(e=>{const tw=Math.round((e.total/mx)*100);const sw=Math.round((e.social/mx)*100);return `<div class="bar-row"><span class="bar-lbl">${e.date}</span><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${tw}%;background:#666"></div></div><div class="bar-bg"><div class="bar-fill" style="width:${sw}%;background:#b04a72"></div></div></div><span class="bar-num">${fmtH(e.total)}</span></div>`;}).join('')}<div class="leg"><div class="leg-i"><div class="leg-d" style="background:#666"></div>Total</div><div class="leg-i"><div class="leg-d" style="background:#b04a72"></div>Social</div></div></div>`;
-}
- 
-checkKey();
+// ── init ──────────────────────────────────────────────────
+checkApiKey();
+const saved = getKey();
+if (saved) document.getElementById('key-field').value = saved;
 </script>
 </body>
 </html>
- 
