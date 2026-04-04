@@ -130,6 +130,11 @@ h1{font-size:22px;font-weight:700;margin-bottom:4px}
         <div class="field"><label>App name</label><input type="text" id="n3" placeholder="YouTube"/></div>
         <div class="field"><label>Hours</label><input type="number" id="h3" step="0.1" min="0"/></div>
       </div>
+      <div class="section-lbl">Date</div>
+      <div class="field" style="margin-bottom:4px">
+        <label>Which day is this data from?</label>
+        <input type="date" id="v-date" style="color-scheme:dark"/>
+      </div>
       <button class="big-btn" id="save-btn" onclick="saveEntry()">Save and get analysis →</button>
     </div>
   </div>
@@ -363,8 +368,10 @@ async function saveEntry() {
   btn.disabled = true;
   btn.textContent = 'Saving...';
  
+  const dateVal = document.getElementById('v-date').value;
+  const dateObj = dateVal ? new Date(dateVal + 'T12:00:00') : new Date();
   const entry = {
-    date: new Date().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}),
+    date: dateObj.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}),
     ts: Date.now(),
     total:   parseFloat(document.getElementById('v-total').value)   || 0,
     social:  parseFloat(document.getElementById('v-social').value)  || 0,
@@ -513,6 +520,9 @@ function renderTrends() {
 checkApiKey();
 const saved = getKey();
 if (saved) document.getElementById('key-field').value = saved;
+const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+document.getElementById('v-date').value = yesterday.toISOString().split('T')[0];
 </script>
 </body>
 </html>
+ 
